@@ -1,15 +1,18 @@
 use actix::prelude::*;
 use kiss3d::nalgebra as na;
 use futures_util::future::join_all;
+use std::path::Path;
 
 const NUM_BOIDS: usize = 100;
+const BOID_MODEL_PATH: &str = "boid_model";
+const BOID_OBJ_FILE: &str = "boid.obj";
 
 struct Boid {
     position: na::Vector3<f32>,
     velocity: na::Vector3<f32>,
     delta_v: na::Vector3<f32>,
     flock: Option< Vec< Option<Addr<Boid>> > >,
-    graphic: (),
+    graphic: Option< kiss3d::scene::SceneNode >,
 }
 
 impl Boid {
@@ -19,7 +22,7 @@ impl Boid {
             velocity: vel,
             delta_v: na::Vector3::default(),
             flock: None,
-            graphic: (),
+            graphic: None,
         }
     }
 
@@ -87,8 +90,21 @@ impl Handler<CommitAndUpdateMsg> for Boid {
 }
 
 struct WindowManager {
-    window: (),
-    bounding_box: (),
+    window: kiss3d::window::Window,
+    bounding_box: (f32, f32, f32),
+}
+
+impl WindowManager {
+    fn new() -> Self {
+        const X_BOUND: f32 = 100f32;
+        const Y_BOUND: f32 = 100f32;
+        const Z_BOUND: f32 = 100f32;
+
+        WindowManager {
+            window: kiss3d::window::Window::new("RS Boids"),
+            bounding_box: (X_BOUND, Y_BOUND, Z_BOUND),
+        }
+    }
 }
 
 impl Actor for WindowManager {
@@ -103,10 +119,27 @@ impl Handler<Render> for WindowManager {
     type Result = ();
 
     fn handle(&mut self, msg: Render, _ctx: &mut Self::Context) -> () {
-        unimplemented!();
-        // self.window.render();
+        if !self.window.render() {
+            System::current().stop();
+        }
     }
 }
+
+#[derive(Message)]
+#[rtype(result = "kiss3d::scene::SceneNode")]
+struct GetBoidObjectMsg;
+
+impl Handler<GetBoidObjectMsg> for WindowManager {
+    type Result = kiss3d::scene::SceneNode;
+
+    fn handle(&mut self, msg: GetBoidObjectMsg, _ctx: &mut Self::Context) -> kiss3d::scene::SceneNode {
+        let boid_model_path = Path::new(BOID_MODEL_PATH);
+        let boid_obj_path = boid_model_path.join(Path::new(BOID_OBJ_FILE));
+        self.window.add_obj(&boid_obj_path, boid_model_path, na::Vector3::new(1f32, 1f32, 1f32))
+    }
+}
+
+
 
 #[actix::main] // <- starts the system and block until future resolves
 async fn main() {
