@@ -1,0 +1,97 @@
+// use actix::prelude::*;
+// use kiss3d::nalgebra as na;
+// use crate::window_manager::WindowManager;
+// use super::Boid;
+use super::*;
+use crate::window_manager::messages as window_messages;
+
+#[derive(Clone, Copy, Message)]
+#[rtype(result = "()")]
+pub struct BoidDataMsg {
+    pub position: na::Vector3<f32>,
+    pub velocity: na::Vector3<f32>,
+}
+
+impl Handler<BoidDataMsg> for Boid {
+    type Result = ();
+
+    fn handle(&mut self, msg: BoidDataMsg, _ctx: &mut Self::Context) {
+        self.observe_boid(msg);
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct SetFlockMsg(pub Vec< Option< Addr<Boid> >>);
+
+impl Handler<SetFlockMsg> for Boid {
+    type Result = ();
+
+    fn handle(&mut self, msg: SetFlockMsg, _ctx: &mut Self::Context) {
+        self.flock = Some( msg.0 );
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct SetWindowManager(pub Addr<WindowManager>);
+
+impl Handler<SetWindowManager> for Boid {
+    type Result = ();
+
+    fn handle(&mut self, msg: SetWindowManager, _ctx: &mut Self::Context) {
+        self.window_manager = Some( msg.0 );
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct RegisterWithWindow;
+
+type RegFut = ResponseActFuture<Boid, ()>;
+
+impl Handler<RegisterWithWindow> for Boid {
+    type Result = RegFut;
+
+    fn handle(&mut self, _msg: RegisterWithWindow, _ctx: &mut Self::Context) -> Self::Result {
+        Box::pin(
+            self
+            .window_manager
+            .as_ref()
+            .expect("window manager not init")
+            .send(
+                window_messages::RegisterBoid(
+                    BoidDataMsg { position: self.position, velocity: self.velocity }
+            ))
+            .into_actor(self)
+            .map(|id, boid, _ctx| { boid.id = id.expect("boid registration failed") })
+        )
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "Vec<SendFut>")]
+pub struct StartFlockUpdate;
+
+type SendFut = Request<Boid, BoidDataMsg>;
+
+impl Handler<StartFlockUpdate> for Boid {
+    type Result = Vec<SendFut>;
+
+    fn handle(&mut self, msg: StartFlockUpdate, _ctx: &mut Self::Context) -> Vec<SendFut>{
+        let bdmsg = BoidDataMsg{ position: self.position, velocity: self.velocity };
+        self.flock.as_ref().expect("flock not init").iter().filter_map(|oa| oa.as_ref().map(|a| a.send(bdmsg))).collect::<Vec<_>>()
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct CommitAndUpdateMsg;
+
+impl Handler<CommitAndUpdateMsg> for Boid {
+    type Result = ();
+
+    fn handle(&mut self, _msg: CommitAndUpdateMsg, _ctx: &mut Self::Context) {
+        unimplemented!();
+    }
+}
