@@ -14,9 +14,13 @@ impl Handler<Render> for WindowManager {
     type Result = ();
 
     fn handle(&mut self, msg: Render, _ctx: &mut Self::Context) -> () {
+        println!("here");
         if !self.window.render() {
+            // println!("leaving");
             System::current().stop();
-        }
+        } //else {
+        //     println!("continuing");
+        // }
     }
 }
 

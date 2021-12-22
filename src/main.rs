@@ -41,7 +41,6 @@ async fn main() {
         )
     }));
     
-    println!("HELLO");
     let flock_init_ok = flock_init_fut.await.iter().all(|(i0, i1)| i0.is_ok() && i1.is_ok());
     assert!(flock_init_ok, "flock init message failed");
 

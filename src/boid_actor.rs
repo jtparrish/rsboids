@@ -36,7 +36,7 @@ impl Boid {
     }
 
     fn observe_boid(&mut self, obs: BoidDataMsg) {
-        unimplemented!();
+        // unimplemented!();
     }
 }
 

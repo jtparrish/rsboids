@@ -4,7 +4,7 @@ use kiss3d::scene::SceneNode;
 pub mod messages;
 
 const BOID_MODEL_PATH: &str = "boid_model";
-const BOID_OBJ_FILE: &str = "boid.obj";
+const BOID_OBJ_FILE: &str = "vult2.obj";
 
 pub struct WindowManager {
     window: kiss3d::window::Window,

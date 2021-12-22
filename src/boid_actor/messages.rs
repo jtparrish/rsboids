@@ -92,6 +92,6 @@ impl Handler<CommitAndUpdateMsg> for Boid {
     type Result = ();
 
     fn handle(&mut self, _msg: CommitAndUpdateMsg, _ctx: &mut Self::Context) {
-        unimplemented!();
+        // unimplemented!();
     }
 }
