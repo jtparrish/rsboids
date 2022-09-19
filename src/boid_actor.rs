@@ -3,11 +3,12 @@ use kiss3d::nalgebra as na;
 use super::window_manager::WindowManager;
 
 pub mod messages;
+mod motion;
 
 use messages::BoidDataMsg;
 
-const ViewConeLength: f32 = 1.0;
-const ViewConeFactor: f32 = 1.0;
+const VIEW_CONE_LENGTH: f32 = 1.0;
+const VIEW_CONE_FACTOR: f32 = 1.0;
 
 pub struct Boid {
     position: na::Vector3<f32>,
@@ -18,6 +19,7 @@ pub struct Boid {
     local_accel: na::Vector3<f32>,
     flock: Option< Vec< Option<Addr<Boid>> > >,
     window_manager: Option< Addr<WindowManager> >,
+    updater: motion::BoidUpdate,
     id: usize,
 }
 
@@ -31,12 +33,13 @@ impl Boid {
             local_accel: na::Vector3::default(),
             flock: None,
             window_manager: None,
+            updater: motion::BoidUpdate::new(),
             id: 0,
         }
     }
 
     fn observe_boid(&mut self, obs: BoidDataMsg) {
-        // unimplemented!();
+        self.updater.observe(obs);
     }
 }
 

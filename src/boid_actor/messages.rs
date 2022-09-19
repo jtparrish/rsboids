@@ -70,28 +70,36 @@ impl Handler<RegisterWithWindow> for Boid {
 }
 
 #[derive(Message)]
-#[rtype(result = "Vec<SendFut>")]
+#[rtype(result = "Vec<BoidUpdateFut>")]
 pub struct StartFlockUpdate;
 
-type SendFut = Request<Boid, BoidDataMsg>;
+type BoidUpdateFut = Request<Boid, BoidDataMsg>;
 
 impl Handler<StartFlockUpdate> for Boid {
-    type Result = Vec<SendFut>;
+    type Result = Vec<BoidUpdateFut>;
 
-    fn handle(&mut self, msg: StartFlockUpdate, _ctx: &mut Self::Context) -> Vec<SendFut>{
+    fn handle(&mut self, msg: StartFlockUpdate, _ctx: &mut Self::Context) -> Vec<BoidUpdateFut>{
         let bdmsg = BoidDataMsg{ position: self.position, velocity: self.velocity };
         self.flock.as_ref().expect("flock not init").iter().filter_map(|oa| oa.as_ref().map(|a| a.send(bdmsg))).collect::<Vec<_>>()
     }
 }
 
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype(result = "Option<ModelUpdateFut>")]
 pub struct CommitAndUpdateMsg;
 
-impl Handler<CommitAndUpdateMsg> for Boid {
-    type Result = ();
+type ModelUpdateFut = Request<WindowManager, window_messages::ModelUpdate>;
 
-    fn handle(&mut self, _msg: CommitAndUpdateMsg, _ctx: &mut Self::Context) {
-        // unimplemented!();
+impl Handler<CommitAndUpdateMsg> for Boid {
+    type Result = Option<ModelUpdateFut>;
+
+    fn handle(&mut self, _msg: CommitAndUpdateMsg, _ctx: &mut Self::Context) -> Option<ModelUpdateFut> {
+        //unimplemented!();
+        let model_update = window_messages::ModelUpdate {
+            id: self.id,
+            translation: na::Translation3::from_vector(crate::TIME_STEP * na::Vector3::new(0f32, 0f32, 1f32)),//unimplemented!(),
+            rot: na::UnitQuaternion::default(),//unimplemented!(),
+        };
+        Some( self.window_manager.as_ref().expect("window manager not init").send(model_update) )
     }
 }

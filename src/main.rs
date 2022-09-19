@@ -2,8 +2,8 @@ use actix::prelude::*;
 use kiss3d::nalgebra as na;
 use futures_util::future::{join_all, join};
 
-const NUM_BOIDS: usize = 100;
-const TIME_STEP: f32 = 1.0;
+const NUM_BOIDS: usize = 10;
+const TIME_STEP: f32 = 1e-2;
 
 mod boid_actor;
 use boid_actor::Boid;
@@ -52,14 +52,15 @@ async fn main() {
     loop {
         // perform an update on the boids
         let update_init_fut = join_all( addrs.iter().map(|addr| addr.send(boid_messages::StartFlockUpdate)) ); 
-        let updates_fut = join_all( update_init_fut.await.into_iter().map(|res| res.expect("init send phase failed")).flatten() );
+        let updates_fut = join_all( update_init_fut.await.into_iter().map(|res| res.expect("init update phase failed")).flatten() );
         let update_success = updates_fut.await.iter().all(|u| u.is_ok());
         assert!(update_success, "update message failed");
 
 
         // commit the updates to the boids states and send them to the window to update the models
-        let commit_fut = join_all( addrs.iter().map(|addr| addr.send(boid_messages::CommitAndUpdateMsg)) );
-        let commit_ok = commit_fut.await.iter().all(|i| i.is_ok());
+        let commit_init_fut = join_all( addrs.iter().map(|addr| addr.send(boid_messages::CommitAndUpdateMsg)) );
+        let commit_fut = join_all( commit_init_fut.await.into_iter().map(|res| res.expect("init commit phase failed").unwrap()) );
+        let commit_ok = commit_fut.await.iter().all(|c| c.is_ok());
         assert!(commit_ok, "commit message failed");
 
 
