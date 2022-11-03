@@ -5,16 +5,9 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
+      <a href="#About The Project">About The Project</a>
       <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#Build With">Built With</a></li>
       </ul>
     </li>
     <li><a href="#What is it">About this Project</a></li>
@@ -23,6 +16,7 @@
   </ol>
 </details>
 
-## What is it
+## About The Project
+###
 ## Roadmap
 ## How it Works
