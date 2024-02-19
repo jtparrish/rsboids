@@ -61,7 +61,7 @@ impl Handler<RegisterWithWindow> for Boid {
             .expect("window manager not init")
             .send(
                 window_messages::RegisterBoid(
-                    BoidDataMsg { position: self.position, velocity: self.velocity }
+                    BoidDataMsg { position: self.position, velocity: self.velocity() }
             ))
             .into_actor(self)
             .map(|id, boid, _ctx| { boid.id = id.expect("boid registration failed") })
@@ -79,7 +79,7 @@ impl Handler<StartFlockUpdate> for Boid {
     type Result = Vec<BoidUpdateFut>;
 
     fn handle(&mut self, msg: StartFlockUpdate, _ctx: &mut Self::Context) -> Vec<BoidUpdateFut>{
-        let bdmsg = BoidDataMsg{ position: self.position, velocity: self.velocity };
+        let bdmsg = BoidDataMsg{ position: self.position, velocity: self.velocity() };
         self.flock.as_ref().expect("flock not init").iter().filter_map(|oa| oa.as_ref().map(|a| a.send(bdmsg))).collect::<Vec<_>>()
     }
 }
@@ -95,11 +95,7 @@ impl Handler<CommitAndUpdateMsg> for Boid {
 
     fn handle(&mut self, _msg: CommitAndUpdateMsg, _ctx: &mut Self::Context) -> Option<ModelUpdateFut> {
         //unimplemented!();
-        let model_update = window_messages::ModelUpdate {
-            id: self.id,
-            translation: na::Translation3::from_vector(crate::TIME_STEP * na::Vector3::new(0f32, 0f32, 1f32)),//unimplemented!(),
-            rot: na::UnitQuaternion::default(),//unimplemented!(),
-        };
+        let model_update = self.update(); 
         Some( self.window_manager.as_ref().expect("window manager not init").send(model_update) )
     }
 }

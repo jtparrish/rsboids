@@ -19,8 +19,8 @@ impl Handler<Render> for WindowManager {
             // println!("leaving");
             System::current().stop();
         } //else {
-        //     println!("continuing");
-        // }
+          //     println!("continuing");
+          // }
     }
 }
 
@@ -35,11 +35,24 @@ impl Handler<RegisterBoid> for WindowManager {
         let boid_model_path = Path::new(BOID_MODEL_PATH);
         let boid_obj_path = boid_model_path.join(Path::new(BOID_OBJ_FILE));
         let boid_id = self.boid_models.len();
+        //let scale = 1f32 / 32f32;
+        let scale = 1f32;
         self.boid_models.push(
-            self.window.add_obj(&boid_obj_path, boid_model_path, na::Vector3::new(1f32, 1f32, 1f32))
+            //self.window.add_sphere(1f32),
+            self.window.add_obj(
+                &boid_obj_path,
+                boid_model_path,
+                scale * na::Vector3::new(1f32, 1f32, 1f32),
+            ),
         );
-        self.boid_models.last_mut().expect("how?").append_translation( &na::Translation3::from_vector(
-            na::Vector3::new((2f32 * (boid_id as f32) + 3f32) * ((2 * ((boid_id % 2) as i32) - 1) as f32), 0f32, -4f32 * ((boid_id) as f32))) );
+        self.boid_models
+            .last_mut()
+            .expect("how?")
+            .append_translation(&na::Translation3::from_vector(
+                //na::Vector3::new((2f32 * (boid_id as f32) + 3f32) * ((2 * ((boid_id % 2) as i32) - 1) as f32), 0f32, -4f32 * ((boid_id) as f32))
+                //na::Vector3::new(0f32, 0f32, 0f32)
+                msg.0.position,
+            ));
 
         boid_id
     }
@@ -47,7 +60,7 @@ impl Handler<RegisterBoid> for WindowManager {
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct ModelUpdate{
+pub struct ModelUpdate {
     pub id: usize,
     pub translation: na::Translation3<f32>,
     pub rot: na::UnitQuaternion<f32>,
@@ -58,7 +71,9 @@ impl Handler<ModelUpdate> for WindowManager {
 
     fn handle(&mut self, msg: ModelUpdate, _ctx: &mut Self::Context) {
         let model = &mut self.boid_models[msg.id];
+        dbg!(msg.translation);
+        dbg!(msg.rot);
         model.append_translation(&msg.translation);
-        model.append_rotation(&msg.rot);
+        model.append_rotation_wrt_center(&msg.rot);
     }
 }
